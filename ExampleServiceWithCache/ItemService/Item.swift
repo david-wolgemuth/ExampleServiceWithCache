@@ -15,6 +15,7 @@ enum ItemType: String {
 }
 
 struct Item {
+    
     let id: Int
     var type: ItemType
     var title: String?

@@ -8,14 +8,13 @@
 
 import UIKit
 
-class ItemTableViewCell: UITableViewCell, ItemServiceObserverTarget {
-    
-    static let ID = "ItemTableViewCell"
-    private var itemId: Int?
+class ItemTableViewCell: UITableViewCell {
     
     static func dequeued(from tableView: UITableView, for indexPath: IndexPath) -> ItemTableViewCell {
-        return tableView.dequeueReusableCell(withIdentifier: ItemTableViewCell.ID, for: indexPath) as! ItemTableViewCell
+        return tableView.dequeueReusableCell(withIdentifier: "ItemTableViewCell", for: indexPath) as! ItemTableViewCell
     }
+    
+    var itemId: Int?
     
     func setItem(withId id: Int) {
         if itemId == id {
@@ -25,6 +24,17 @@ class ItemTableViewCell: UITableViewCell, ItemServiceObserverTarget {
         itemId = id
         ItemService.shared.fetch(self, itemId: id)
     }
+    
+    private func updateLabels(text: String?, detail: String?) {
+        textLabel?.text = text
+        detailTextLabel?.text = detail
+        setNeedsLayout()
+        layoutIfNeeded()
+    }
+}
+
+extension ItemTableViewCell: ItemServiceObserverTarget {
+    
     func itemService(_ itemService: ItemService, didFetch item: Item) {
         if itemId != item.id {
             return  // cell no longer being used for this item
@@ -36,12 +46,5 @@ class ItemTableViewCell: UITableViewCell, ItemServiceObserverTarget {
             return  // cell no longer being used for this item
         }
         updateLabels(text: "\(itemId)", detail: "FAILED TO FETCH \(itemId)")
-    }
-    
-    private func updateLabels(text: String?, detail: String?) {
-        textLabel?.text = text
-        detailTextLabel?.text = detail
-        setNeedsLayout()
-        layoutIfNeeded()
     }
 }

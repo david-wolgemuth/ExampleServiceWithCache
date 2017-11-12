@@ -13,19 +13,9 @@ protocol ItemServiceObserverTarget: class {
     func itemService(_ itemService: ItemService, failedToFetch itemId: Int)
 }
 
-class ItemService: CachedItemDelegate {
+class ItemService {
     
     static let shared = ItemService()  // Singleton
-    
-    private var items = [Int: CachedItem]()
-    private var observers = [ItemServiceObserver]()
-    
-    private init() {
-        NotificationCenter.default.addObserver(forName: Notification.Name.UIApplicationDidReceiveMemoryWarning, object: nil, queue: .main) { [weak self] notification in
-            print("LOW MEMORY WARNING :: DUMPING CACHE")
-            self?.dumpCache()
-        }
-    }
     
     func fetch(_ target: ItemServiceObserverTarget, itemId: Int) {
         let wrappedObserver = ItemServiceObserver(itemId: itemId, target: target)
@@ -39,6 +29,32 @@ class ItemService: CachedItemDelegate {
         self.items[itemId] = cachedItem
         cachedItem.fetch()
     }
+    
+    private var items = [Int: CachedItem]()
+    private var observers = [ItemServiceObserver]()
+    
+    private init() {
+        NotificationCenter.default.addObserver(forName: Notification.Name.UIApplicationDidReceiveMemoryWarning, object: nil, queue: .main) { [weak self] notification in
+            print("LOW MEMORY WARNING :: DUMPING CACHE")
+            self?.dumpCache()
+        }
+    }
+    private func dumpCache() {
+        items.removeAll()
+        DispatchQueue.main.async {
+            for observer in self.observers {
+                observer.target?.itemService(self, failedToFetch: observer.itemId)
+            }
+        }
+        observers.removeAll()
+    }
+    private struct ItemServiceObserver {
+        let itemId: Int
+        weak var target: ItemServiceObserverTarget?
+    }
+}
+
+extension ItemService: CachedItemDelegate {
     
     func cachedItem(_ cachedItem: CachedItem, didFetch item: Item) {
         var index = 0
@@ -54,7 +70,6 @@ class ItemService: CachedItemDelegate {
             observers.remove(at: index)
         }
     }
-    
     func cachedItem(_ cachedItem: CachedItem, failedToFetch itemId: Int) {
         var index = 0
         while index < observers.count {
@@ -68,20 +83,5 @@ class ItemService: CachedItemDelegate {
             }
             observers.remove(at: index)
         }
-    }
-    
-    private func dumpCache() {
-        items.removeAll()
-        DispatchQueue.main.async {
-            for observer in self.observers {
-                observer.target?.itemService(self, failedToFetch: observer.itemId)
-            }
-        }
-        observers.removeAll()
-    }
-    
-    private struct ItemServiceObserver {
-        let itemId: Int
-        weak var target: ItemServiceObserverTarget?
     }
 }

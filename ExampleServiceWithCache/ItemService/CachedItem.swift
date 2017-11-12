@@ -14,19 +14,13 @@ protocol CachedItemDelegate: class {
 }
 
 class CachedItem {
-    var itemId: Int
     
-    private var item: Item?
-    private var beganFetch: Date?
-    private var completedFetch: Date?
-    private var failedFetch: Date?
-    private weak var delegate: CachedItemDelegate?
+    var itemId: Int
     
     init(delegate: CachedItemDelegate, itemId: Int) {
         self.itemId = itemId
         self.delegate = delegate
     }
-    
     func fetch() {
         if let _ = completedFetch, let item = self.item {
             // Already in cache
@@ -45,6 +39,12 @@ class CachedItem {
             self.handleHttpResponse(badRequest: badRequest)
         }
     }
+    
+    private var item: Item?
+    private var beganFetch: Date?
+    private var completedFetch: Date?
+    private var failedFetch: Date?
+    private weak var delegate: CachedItemDelegate?
     
     private func handleHttpResponse(badRequest: Bool) {
         if badRequest {

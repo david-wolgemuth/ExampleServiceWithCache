@@ -16,22 +16,17 @@ class ItemTableViewController: UITableViewController {
         super.viewDidLoad()
         for _ in 0...240 {
             itemIds.append(
-                Int(arc4random_uniform(60))
+                Int(arc4random_uniform(60))  // demo caching by putting only 60 ids across 240 rows (produce duplicates) 
             )
         }
     }
-    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return itemIds.count
     }
-    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = ItemTableViewCell.dequeued(from: tableView, for: indexPath)
         let itemId = itemIds[indexPath.row]
         cell.setItem(withId: itemId)
         return cell
-    }
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print(itemIds[indexPath.row])
     }
 }
