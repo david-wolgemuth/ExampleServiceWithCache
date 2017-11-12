@@ -57,31 +57,28 @@ class ItemService {
 extension ItemService: CachedItemDelegate {
     
     func cachedItem(_ cachedItem: CachedItem, didFetch item: Item) {
-        var index = 0
-        while index < observers.count {
-            let observer = observers[index]
-            if observer.itemId != item.id {
-                index += 1
-                continue
-            }
-            DispatchQueue.main.async {
+        let itemObservers = popObservers(ofItem: item.id)
+        DispatchQueue.main.async {
+            for observer in itemObservers {
                 observer.target?.itemService(self, didFetch: item)
             }
-            observers.remove(at: index)
         }
     }
     func cachedItem(_ cachedItem: CachedItem, failedToFetch itemId: Int) {
-        var index = 0
-        while index < observers.count {
-            let observer = observers[index]
-            if observer.itemId != itemId {
-                index += 1
-                continue
-            }
-            DispatchQueue.main.async {
+        let itemObservers = popObservers(ofItem: itemId)
+        DispatchQueue.main.async {
+            for observer in itemObservers {
                 observer.target?.itemService(self, failedToFetch: itemId)
             }
-            observers.remove(at: index)
         }
+    }
+    private func popObservers(ofItem itemId: Int) -> [ItemServiceObserver] {
+        let itemObservers = observers.filter({ (observer) -> Bool in
+            return observer.itemId == itemId
+        })
+        self.observers = observers.filter({ (observer) -> Bool in
+            return observer.itemId != itemId
+        })
+        return itemObservers
     }
 }
