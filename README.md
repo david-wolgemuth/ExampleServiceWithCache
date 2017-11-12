@@ -2,11 +2,12 @@
 
 iOS - Demo Async Item Service With Cache
 
-### Demo
+### API
 
-Demo of api can be viewed in [ItemTableViewCell](./ExampleServiceWithCache/ItemTableView/ItemTableViewCell.swift):
+Example of end-api can be viewed in [ItemTableViewCell](./ExampleServiceWithCache/ItemTableView/ItemTableViewCell.swift):
 
 ```swift
+// Simplified Example
 class ItemTableViewCell: UITableViewCell, ItemServiceObserverTarget {
     func trigger() {
         ItemService.shared.fetch(self, itemId: id)    
