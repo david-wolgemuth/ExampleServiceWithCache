@@ -31,6 +31,6 @@ struct Item {
         if title == nil {
             return description!
         }
-        return "\(title!) - \(description!)"
+        return "\(title!)\(id) - \(description!)"
     }
 }
