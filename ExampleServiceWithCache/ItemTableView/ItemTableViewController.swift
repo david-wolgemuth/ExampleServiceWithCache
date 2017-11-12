@@ -24,7 +24,7 @@ class ItemTableViewController: UITableViewController {
         return itemIds.count
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = ItemTableViewCell.dequeued(from: tableView, for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ItemTableViewCell", for: indexPath) as! ItemTableViewCell
         let itemId = itemIds[indexPath.row]
         cell.setItem(withId: itemId)
         return cell

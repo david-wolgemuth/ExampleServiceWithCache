@@ -8,12 +8,13 @@ Example of end-api can be viewed in [ItemTableViewCell](./ExampleServiceWithCach
 
 ```swift
 // Simplified Example
-class ItemTableViewCell: UITableViewCell, ItemServiceObserverTarget {
-    func trigger() {
+class ViewController: UIViewController, ItemServiceObserverTarget {
+    override func viewDidLoad() {
+        super.viewDidLoad()
         ItemService.shared.fetch(self, itemId: id)    
     }
     func itemService(_ itemService: ItemService, didFetch item: Item) {
-        self.textLabel?.text = item.title
+        self.titleLabel?.text = item.title
     }
 }
 ```
