@@ -18,7 +18,19 @@ class ItemTableViewCell: UITableViewCell {
         }
         updateLabels(text: "\(id)", detail: nil)
         itemId = id
-        ItemService.shared.fetch(self, itemId: id)
+        ItemService.shared.fetch(itemId: id) { (err, item) in
+            if let err = err {
+                self.updateLabels(text: "ERROR", detail: err)
+                return
+            }
+            guard let item = item else {
+                return // reusable cell, other item received error, this cell is now seeing error
+            }
+            if self.itemId != item.id {
+                return  // reusable cell no longer being used for this item
+            }
+            self.updateLabels(text: "\(item.id)", detail: item.fancyString())
+        }
     }
     
     private func updateLabels(text: String?, detail: String?) {
@@ -26,21 +38,5 @@ class ItemTableViewCell: UITableViewCell {
         detailTextLabel?.text = detail
         setNeedsLayout()
         layoutIfNeeded()
-    }
-}
-
-extension ItemTableViewCell: ItemServiceObserverTarget {
-    
-    func itemService(_ itemService: ItemService, didFetch item: Item) {
-        if itemId != item.id {
-            return  // reusable cell no longer being used for this item
-        }
-        updateLabels(text: "\(item.id)", detail: item.fancyString())
-    }
-    func itemService(_ itemService: ItemService, failedToFetch itemId: Int) {
-        if itemId != itemId {
-            return  // reusable cell no longer being used for this item
-        }
-        updateLabels(text: "\(itemId)", detail: "FAILED TO FETCH \(itemId)")
     }
 }

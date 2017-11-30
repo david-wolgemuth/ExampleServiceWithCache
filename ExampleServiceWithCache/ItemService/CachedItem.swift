@@ -8,23 +8,24 @@
 
 import Foundation
 
-protocol CachedItemDelegate: class {
-    func cachedItem(_ cachedItem: CachedItem, didFetch item: Item)
-    func cachedItem(_ cachedItem: CachedItem, failedToFetch itemId: Int)
-}
+typealias CachedItemFetchedCallback = (_ err: String?, _ item: Item?) -> ()
 
 class CachedItem {
     
     var itemId: Int
     
-    init(delegate: CachedItemDelegate, itemId: Int) {
+    init(itemId: Int) {
         self.itemId = itemId
-        self.delegate = delegate
+        NotificationCenter.default.addObserver(forName: Notification.Name.UIApplicationDidReceiveMemoryWarning, object: nil, queue: .main) { [weak self] notification in
+            print("LOW MEMORY WARNING :: DUMPING CACHE")
+            self?.dumpItem(err: "Memory Warning")
+        }
     }
-    func fetch() {
-        if let _ = completedFetch, let item = self.item {
+    func fetch(callback: @escaping CachedItemFetchedCallback) {
+        self.cachedItemFetchedCallbacks.append(callback)
+        if let _ = completedFetch, let _ = self.item {
             // Already in cache
-            delegate?.cachedItem(self, didFetch: item)
+            callAllCallbacks()
             return
         }
         if let _ = beganFetch {
@@ -42,22 +43,37 @@ class CachedItem {
     private var beganFetch: Date?
     private var completedFetch: Date?
     private var failedFetch: Date?
-    private weak var delegate: CachedItemDelegate?
+    private var cachedItemFetchedCallbacks = [CachedItemFetchedCallback]()
+    
+    private func callAllCallbacks(err: String?=nil) {
+        DispatchQueue.main.async {
+            for callback in self.cachedItemFetchedCallbacks {
+                callback(err, self.item)
+            }
+            self.cachedItemFetchedCallbacks = []
+        }
+    }
     
     private func handleHttpResponse(success: Bool) {
         if !success {
             beganFetch = nil  // allows request to be reattempted
             failedFetch = Date()
-            delegate?.cachedItem(self, failedToFetch: itemId)
+            callAllCallbacks(err: "Something Bad Happened")
             return
         }
         completedFetch = Date()
         let item = Item(id: self.itemId, type: .typeA, title: "Blah", description: "Bob Lah Blah's Law Blog")
-        delegate?.cachedItem(self, didFetch: item)
         self.item = item
+        callAllCallbacks()
+    }
+    
+    private func dumpItem(err: String) {
+        self.item = nil
+        beganFetch = nil  // allows request to be reattempted
+        failedFetch = Date()
+        callAllCallbacks(err: err)
     }
 }
-
 
 func fakeHttpRequest(id: Int, completion: @escaping (Bool) -> ()) {
     // https://stackoverflow.com/a/40169565/4637643
